@@ -23,9 +23,10 @@ interface MatchCardProps {
   match: Match;
   showGroup?: boolean;
   compact?: boolean;
+  onPredictionSaved?: () => void;
 }
 
-export function MatchCard({ match, showGroup = true, compact = false }: MatchCardProps) {
+export function MatchCard({ match, showGroup = true, compact = false, onPredictionSaved }: MatchCardProps) {
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -82,6 +83,7 @@ export function MatchCard({ match, showGroup = true, compact = false }: MatchCar
     await savePrediction(newPrediction);
     setPrediction(newPrediction);
     setIsEditing(false);
+    onPredictionSaved?.();
   };
 
   const handleClick = (e: React.MouseEvent) => {

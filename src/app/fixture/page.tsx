@@ -3,10 +3,11 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { MatchCard } from "@/components/match-card";
-import { matches as staticMatches, Match } from "@/lib/data/matches";
+import { matches as staticMatches, Match, Prediction } from "@/lib/data/matches";
 import { getTeamsByGroup, groups, teams, Team } from "@/lib/data/teams";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase-client";
+import { getAllPredictions } from "@/lib/data/utils";
 
 type Stage = "groups" | "round_of_32" | "round_of_16" | "quarter" | "semi" | "final";
 
@@ -27,6 +28,16 @@ function FixtureContent() {
   const [activeStage, setActiveStage] = useState<Stage>(initialStage);
   const [activeGroup, setActiveGroup] = useState(initialGroup);
   const [matches, setMatches] = useState<Match[]>(staticMatches);
+  const [predictions, setPredictions] = useState<Prediction[]>([]);
+
+  const fetchUserPredictions = async () => {
+    const userPredictions = await getAllPredictions();
+    setPredictions(userPredictions);
+  };
+
+  useEffect(() => {
+    fetchUserPredictions();
+  }, []);
 
   useEffect(() => {
     async function fetchMatches() {
@@ -93,12 +104,48 @@ function FixtureContent() {
           </div>
 
           {/* Group standings */}
-          <GroupStandings groupId={activeGroup} matches={matches} />
+          <GroupStandings groupId={activeGroup} matches={matches} title={`Grupo ${activeGroup}`} />
+
+          {/* Predicted Group standings */}
+          {(() => {
+            const groupMatches = matches.filter((m) => m.groupId === activeGroup);
+            const predictedMatchIds = predictions.map((p) => p.matchId);
+            const allPredicted = groupMatches.length > 0 && groupMatches.every((m) => predictedMatchIds.includes(m.id));
+
+            if (allPredicted) {
+              const predictedMatches = groupMatches.map((m) => {
+                const pred = predictions.find((p) => p.matchId === m.id);
+                return {
+                  ...m,
+                  status: "finished" as const,
+                  homeScore: pred?.homeScore ?? m.homeScore,
+                  awayScore: pred?.awayScore ?? m.awayScore,
+                };
+              });
+
+              return (
+                <div className="mt-6 mb-2">
+                  <GroupStandings
+                    groupId={activeGroup}
+                    matches={predictedMatches}
+                    title="Mis Predicciones"
+                    isPrediction
+                  />
+                </div>
+              );
+            }
+            return null;
+          })()}
 
           {/* Matches */}
-          <div className="space-y-3">
+          <div className="space-y-3 mt-4">
             {matches.filter(m => m.groupId === activeGroup).map((match) => (
-              <MatchCard key={match.id} match={match} showGroup={false} />
+              <MatchCard 
+                key={match.id} 
+                match={match} 
+                showGroup={false} 
+                onPredictionSaved={fetchUserPredictions} 
+              />
             ))}
           </div>
         </TabsContent>
@@ -128,7 +175,7 @@ export default function FixturePage() {
   );
 }
 
-function GroupStandings({ groupId, matches }: { groupId: string, matches: Match[] }) {
+function GroupStandings({ groupId, matches, title, isPrediction }: { groupId: string, matches: Match[], title?: string, isPrediction?: boolean }) {
   const teams = getTeamsByGroup(groupId);
 
   // Calculate standings from match results
@@ -171,11 +218,12 @@ function GroupStandings({ groupId, matches }: { groupId: string, matches: Match[
   }).sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
-      <div className="bg-muted/50 px-4 py-2">
-        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-          Grupo {groupId}
+    <div className={`rounded-2xl border ${isPrediction ? 'border-primary/50 shadow-md shadow-primary/10' : 'border-border/60'} bg-card overflow-hidden`}>
+      <div className={`${isPrediction ? 'bg-primary/10' : 'bg-muted/50'} px-4 py-2 flex items-center justify-between`}>
+        <h3 className={`text-xs font-bold uppercase tracking-wider ${isPrediction ? 'text-primary' : 'text-muted-foreground'}`}>
+          {title || `Grupo ${groupId}`}
         </h3>
+        {isPrediction && <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full font-bold">SIMULACIÓN</span>}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
@@ -196,7 +244,7 @@ function GroupStandings({ groupId, matches }: { groupId: string, matches: Match[
               <tr
                 key={s.team.id}
                 className={`border-b border-border/20 last:border-0 ${
-                  i < 2 ? "bg-primary/5" : i === 2 ? "bg-amber-500/5" : ""
+                  i < 2 ? "bg-emerald-500/10" : i === 2 ? "bg-amber-500/10" : "bg-red-500/10"
                 }`}
               >
                 <td className="py-2.5 pl-4 pr-2 font-bold">{i + 1}</td>
