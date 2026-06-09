@@ -6,13 +6,13 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 export const revalidate = 15; // Cache for 15 seconds
 
-export async function GET(request: Request, { params }: { params: { username: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ username: string }> }) {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
     return NextResponse.json({ error: 'Missing Supabase keys' }, { status: 500 });
   }
 
   try {
-    const { username } = params;
+    const { username } = await params;
     const decodedUsername = decodeURIComponent(username);
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 

@@ -11,11 +11,13 @@ import { calculatePoints } from "@/lib/data/utils";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { ChevronLeftIcon } from "lucide-react";
 
-export default function PublicProfilePage({ params }: { params: { username: string } }) {
+export default function PublicProfilePage() {
   const { user } = useAuth();
-  const decodedUsername = decodeURIComponent(params.username);
+  const params = useParams();
+  const decodedUsername = typeof params.username === 'string' ? decodeURIComponent(params.username) : '';
   const isOwnProfile = user?.username === decodedUsername;
 
   const [loading, setLoading] = useState(true);
