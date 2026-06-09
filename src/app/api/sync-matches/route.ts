@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { matches as staticMatches } from '@/lib/data/matches';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -25,21 +26,26 @@ export async function GET(request: Request) {
     }
 
     // 2. Mapear la respuesta de la API a nuestro esquema de Supabase
-    const mappedMatches = data.games.map((f: any) => ({
-      id: parseInt(f.id),
-      stage: mapStage(f.type),
-      group_id: f.group || null,
-      home_team_id: parseInt(f.home_team_id),
-      away_team_id: parseInt(f.away_team_id),
-      // Convertir '06/11/2026 13:00' a formato ISO
-      match_date: parseDate(f.local_date),
-      stadium: `Estadio ${f.stadium_id}`, // Podríamos hacer fetch a /get/stadiums para el nombre real
-      city: 'Sede Oficial',
-      country: '', 
-      status: mapStatus(f.finished, f.time_elapsed),
-      home_score: f.home_score === "null" ? null : parseInt(f.home_score),
-      away_score: f.away_score === "null" ? null : parseInt(f.away_score),
-    }));
+    const mappedMatches = data.games.map((f: any) => {
+      const matchId = parseInt(f.id);
+      const staticMatch = staticMatches.find(m => m.id === matchId);
+      
+      return {
+        id: matchId,
+        stage: mapStage(f.type),
+        group_id: f.group || null,
+        home_team_id: parseInt(f.home_team_id),
+        away_team_id: parseInt(f.away_team_id),
+        // Convertir '06/11/2026 13:00' a formato ISO
+        match_date: parseDate(f.local_date),
+        stadium: staticMatch ? staticMatch.stadium : `Estadio ${f.stadium_id}`,
+        city: staticMatch ? staticMatch.city : 'Sede Oficial',
+        country: staticMatch ? staticMatch.country : '', 
+        status: mapStatus(f.finished, f.time_elapsed),
+        home_score: f.home_score === "null" ? null : parseInt(f.home_score),
+        away_score: f.away_score === "null" ? null : parseInt(f.away_score),
+      };
+    });
 
     // 3. Upsert en Supabase
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
