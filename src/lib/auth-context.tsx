@@ -49,7 +49,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        await fetchAndSetProfile(session.user.id, session.user.email || "");
+        const metaUsername = session.user.user_metadata?.username;
+        await fetchAndSetProfile(session.user.id, session.user.email || "", metaUsername);
       }
       setLoading(false);
     };
@@ -60,7 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: any, session: any) => {
         if (session?.user) {
-          await fetchAndSetProfile(session.user.id, session.user.email || "");
+          const metaUsername = session.user.user_metadata?.username;
+          await fetchAndSetProfile(session.user.id, session.user.email || "", metaUsername);
         } else {
           setUser(null);
         }
@@ -73,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const fetchAndSetProfile = async (uid: string, fallbackEmail: string) => {
+  const fetchAndSetProfile = async (uid: string, fallbackEmail: string, metaUsername?: string) => {
     try {
       const { data: profile, error } = await supabase
         .from("profiles")
@@ -86,7 +88,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem("pegalo_display_name", profile.username);
       } else {
         // Fallback user if profile row was not created or delayed
-        const dummyUser = { username: fallbackEmail.split("@")[0], email: fallbackEmail };
+        const fallbackName = metaUsername || fallbackEmail.split("@")[0];
+        const dummyUser = { username: fallbackName, email: fallbackEmail };
         setUser(dummyUser);
       }
     } catch (e) {
@@ -150,7 +153,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
-        await fetchAndSetProfile(data.user.id, data.user.email || "");
+        const metaUsername = data.user.user_metadata?.username;
+        await fetchAndSetProfile(data.user.id, data.user.email || "", metaUsername);
       }
       return { success: true };
     } catch (e: any) {
