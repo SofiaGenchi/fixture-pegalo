@@ -59,7 +59,7 @@ export default function HomePage() {
       if (isSupabaseConfigured) {
         const { data } = await supabase.from("matches").select("*").order("match_date", { ascending: true });
         if (data && data.length > 0) {
-          const mapped = data.map(d => ({
+          const mapped = data.map((d: any) => ({
              id: d.id, stage: d.stage as any, groupId: d.group_id, homeTeamId: d.home_team_id, awayTeamId: d.away_team_id,
              matchDate: d.match_date, stadium: d.stadium, city: d.city, country: d.country, status: d.status as any,
              homeScore: d.home_score, awayScore: d.away_score
