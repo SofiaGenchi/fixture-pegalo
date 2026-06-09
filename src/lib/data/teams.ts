@@ -33,7 +33,7 @@ export const teams: Team[] = [
   { id: 36, name: "Norway", nameEs: "Norway", code: "NOR", flag: "🇳🇴", groupId: "I" },
   { id: 37, name: "Argentina", nameEs: "Argentina", code: "ARG", flag: "🇦🇷", groupId: "J" },
   { id: 42, name: "Democratic Republic of the Congo", nameEs: "Democratic Republic of the Congo", code: "COD", flag: "🇨🇩", groupId: "K" },
-  { id: 45, name: "England", nameEs: "England", code: "ENG", flag: "🇪🇳🇬", groupId: "L" },
+  { id: 45, name: "England", nameEs: "England", code: "ENG", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", groupId: "L" },
   { id: 4, name: "Czech Republic", nameEs: "Czech Republic", code: "CZE", flag: "🇨🇿", groupId: "A" },
   { id: 5, name: "Canada", nameEs: "Canada", code: "CAN", flag: "🇨🇦", groupId: "B" },
   { id: 7, name: "Qatar", nameEs: "Qatar", code: "QAT", flag: "🇶🇦", groupId: "B" },
