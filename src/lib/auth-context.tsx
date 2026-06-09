@@ -241,16 +241,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
-        // 3. Create profile entry manually (if the Supabase trigger didn't do it)
-        const { error: profileErr } = await supabase.from("profiles").insert({
-          id: data.user.id,
-          username: trimmedUsername,
-          email: trimmedEmail,
+        // 3. Create profile entry using secure server API (bypasses RLS)
+        const res = await fetch("/api/user/create-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: data.user.id,
+            username: trimmedUsername,
+            email: trimmedEmail,
+          })
         });
 
-        // Ignore error if it's a duplicate key (meaning the database trigger already created it)
-        if (profileErr && profileErr.code !== '23505') {
-          console.error("Error creating profile:", profileErr.message);
+        if (!res.ok) {
+          const errorData = await res.json();
+          console.error("Error creating profile:", errorData.error);
           return { success: false, error: "Error al crear el perfil de usuario." };
         }
 
@@ -315,12 +319,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Update
-      const { error } = await supabase
-        .from("profiles")
-        .update({ username: trimmed })
-        .eq("id", session.user.id);
+      const res = await fetch("/api/user/update-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: session.user.id,
+          username: trimmed
+        })
+      });
 
-      if (error) return { success: false, error: "Error al actualizar el nombre." };
+      if (!res.ok) return { success: false, error: "Error al actualizar el nombre." };
 
       setUser({ ...user, username: trimmed });
       localStorage.setItem("pegalo_display_name", trimmed);
