@@ -15,6 +15,9 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  updateUsername: (newUsername: string) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  deleteAccount: () => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -276,8 +279,97 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUsername = async (newUsername: string) => {
+    if (!user) return { success: false, error: "No session" };
+    if (!newUsername || newUsername.trim().length < 3) {
+      return { success: false, error: "El nombre de usuario debe tener al menos 3 caracteres." };
+    }
+    const trimmed = newUsername.trim();
+
+    if (!isSupabaseConfigured) {
+      const updatedUser = { ...user, username: trimmed };
+      setUser(updatedUser);
+      localStorage.setItem("pegalo_current_user", JSON.stringify(updatedUser));
+      localStorage.setItem("pegalo_display_name", trimmed);
+      return { success: true };
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return { success: false, error: "No session" };
+
+      // Check if taken
+      const { data: existingUser } = await supabase
+        .from("profiles")
+        .select("id")
+        .ilike("username", trimmed)
+        .neq("id", session.user.id)
+        .maybeSingle();
+
+      if (existingUser) {
+        return { success: false, error: "El nombre de usuario ya está en uso." };
+      }
+
+      // Update
+      const { error } = await supabase
+        .from("profiles")
+        .update({ username: trimmed })
+        .eq("id", session.user.id);
+
+      if (error) return { success: false, error: "Error al actualizar el nombre." };
+
+      setUser({ ...user, username: trimmed });
+      localStorage.setItem("pegalo_display_name", trimmed);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    if (!isSupabaseConfigured) return { success: false, error: "No disponible en modo local." };
+    if (newPassword.length < 6) return { success: false, error: "Mínimo 6 caracteres." };
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!isSupabaseConfigured) {
+      logout();
+      return { success: true };
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return { success: false, error: "No session" };
+
+      const res = await fetch("/api/user/delete-account", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`
+        }
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        return { success: false, error: errorData.error || "Error al eliminar la cuenta." };
+      }
+
+      await logout();
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUsername, updatePassword, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

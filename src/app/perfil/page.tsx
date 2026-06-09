@@ -9,15 +9,25 @@ import { getTeamById } from "@/lib/data/teams";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { calculatePoints } from "@/lib/data/utils";
 import { UserAvatar } from "@/components/user-avatar";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase-client";
 import Link from "next/link";
 
 export default function PerfilPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUsername, updatePassword, deleteAccount } = useAuth();
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [standings, setStandings] = useState<{ points: number; rank: number; exactResults: number; totalPredictions: number } | null>(null);
+
+  // Settings states
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [settingsError, setSettingsError] = useState("");
+  const [settingsSuccess, setSettingsSuccess] = useState("");
+  const [isUsernameOpen, setIsUsernameOpen] = useState(false);
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -98,6 +108,40 @@ export default function PerfilPage() {
     }
   });
 
+  const handleUpdateUsername = async () => {
+    setSettingsError("");
+    setSettingsSuccess("");
+    const res = await updateUsername(newUsername);
+    if (res.success) {
+      setSettingsSuccess("Nombre de usuario actualizado con éxito.");
+      setIsUsernameOpen(false);
+      setNewUsername("");
+    } else {
+      setSettingsError(res.error || "Error al actualizar.");
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    setSettingsError("");
+    setSettingsSuccess("");
+    const res = await updatePassword(newPassword);
+    if (res.success) {
+      setSettingsSuccess("Contraseña actualizada con éxito.");
+      setIsPasswordOpen(false);
+      setNewPassword("");
+    } else {
+      setSettingsError(res.error || "Error al actualizar.");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setSettingsError("");
+    const res = await deleteAccount();
+    if (!res.success) {
+      setSettingsError(res.error || "Error al eliminar la cuenta.");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Profile header */}
@@ -105,7 +149,6 @@ export default function PerfilPage() {
         <UserAvatar username={user.username} size="lg" />
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold truncate text-foreground">{user.username}</h1>
-          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
           <p className="text-xs text-primary font-bold mt-1">
             {predictions.length} pronósticos realizados
           </p>
@@ -120,6 +163,90 @@ export default function PerfilPage() {
             Cerrar Sesión
           </Button>
         </div>
+      </div>
+
+      {settingsError && <div className="text-xs font-bold text-red-500 bg-red-500/10 p-3 rounded-xl border border-red-500/20">{settingsError}</div>}
+      {settingsSuccess && <div className="text-xs font-bold text-emerald-500 bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20">{settingsSuccess}</div>}
+
+      {/* Settings Grid */}
+      <div className="grid grid-cols-3 gap-2">
+        <Dialog open={isUsernameOpen} onOpenChange={setIsUsernameOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="text-xs font-semibold h-10 w-full text-muted-foreground hover:text-foreground">
+              ✏️ Cambiar Nombre
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Cambiar nombre de usuario</DialogTitle>
+              <DialogDescription>
+                Elige un nuevo nombre único. Aparecerá así en el ranking público.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <input
+                type="text"
+                placeholder="Nuevo nombre"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                className="w-full rounded-xl border border-border/80 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsUsernameOpen(false)}>Cancelar</Button>
+              <Button onClick={handleUpdateUsername}>Guardar Cambios</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="text-xs font-semibold h-10 w-full text-muted-foreground hover:text-foreground">
+              🔒 Contraseña
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Cambiar Contraseña</DialogTitle>
+              <DialogDescription>
+                Ingresa tu nueva contraseña (mínimo 6 caracteres).
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <input
+                type="password"
+                placeholder="Nueva contraseña"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full rounded-xl border border-border/80 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsPasswordOpen(false)}>Cancelar</Button>
+              <Button onClick={handleUpdatePassword}>Actualizar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="text-xs font-semibold h-10 w-full text-destructive hover:bg-destructive/10 border-destructive/20">
+              🗑️ Eliminar
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md border-red-500/50">
+            <DialogHeader>
+              <DialogTitle className="text-red-500">¿Eliminar cuenta definitivamente?</DialogTitle>
+              <DialogDescription>
+                <strong className="text-foreground">ESTA ACCIÓN ES IRREVERSIBLE.</strong> Perderás todos tus pronósticos, tus puntos y serás borrado del ranking inmediatamente.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-4">
+              <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancelar</Button>
+              <Button variant="destructive" onClick={handleDeleteAccount}>Sí, Eliminar Mi Cuenta</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats grid */}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { MatchCard } from "@/components/match-card";
 import { matches as staticMatches, Match } from "@/lib/data/matches";
-import { getTeamsByGroup, groups } from "@/lib/data/teams";
+import { getTeamsByGroup, groups, teams, Team } from "@/lib/data/teams";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase-client";
 
@@ -42,7 +42,15 @@ export default function FixturePage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold">📅 Fixture Mundial 2026</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="text-xl font-bold">📅 Fixture Mundial 2026</h1>
+        <div className="relative w-full sm:w-64">
+          <TeamSearch onSelect={(t) => {
+            setActiveStage("groups");
+            setActiveGroup(t.groupId);
+          }} />
+        </div>
+      </div>
 
       {/* Stage tabs */}
       <Tabs
@@ -201,3 +209,63 @@ function GroupStandings({ groupId, matches }: { groupId: string, matches: Match[
     </div>
   );
 }
+
+function TeamSearch({ onSelect }: { onSelect: (t: Team) => void }) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const filteredTeams = query.length > 0 
+    ? teams.filter(t => 
+        t.name.toLowerCase().includes(query.toLowerCase()) || 
+        t.nameEs.toLowerCase().includes(query.toLowerCase()) ||
+        t.code.toLowerCase().includes(query.toLowerCase())
+      )
+    : [];
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <span className="absolute inset-y-0 left-3 flex items-center text-muted-foreground text-sm">
+          🔍
+        </span>
+        <input
+          type="text"
+          placeholder="Buscar selección..."
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => { if (query) setOpen(true); }}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          className="w-full rounded-full border border-border/80 bg-card pl-9 pr-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+        />
+      </div>
+      
+      {open && filteredTeams.length > 0 && (
+        <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto rounded-xl border border-border/80 bg-card/95 backdrop-blur-xl shadow-lg p-1">
+          {filteredTeams.map(t => (
+            <button
+              key={t.id}
+              onClick={() => {
+                onSelect(t);
+                setQuery("");
+                setOpen(false);
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{t.flag}</span>
+                <span className="font-medium text-foreground">{t.nameEs}</span>
+              </div>
+              <span className="text-xs text-muted-foreground font-bold">
+                Grupo {t.groupId}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+

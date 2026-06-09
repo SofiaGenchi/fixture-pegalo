@@ -28,7 +28,7 @@ export default function RankingPage() {
             .from("user_standings")
             .select("username, points, exact_results, total_predictions, rank")
             .order("rank", { ascending: true })
-            .limit(30);
+            .limit(1000);
 
           if (standingsErr) {
             console.error("Error fetching standings:", standingsErr.message);
