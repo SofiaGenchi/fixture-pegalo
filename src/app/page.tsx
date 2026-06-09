@@ -105,7 +105,7 @@ export default function HomePage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500">
       {/* Countdown */}
       <Countdown />
 
@@ -117,20 +117,23 @@ export default function HomePage() {
           <StatCard label="Aciertos" value={`${standings?.exactResults ?? exactResults}/${standings?.totalPredictions ?? totalPredictions}`} icon="🎯" />
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-4 text-center space-y-3 shadow-sm">
-          <div className="flex items-center justify-center gap-2 text-sm font-bold text-primary">
-            <span>⚽</span>
-            <span>¡Pronosticá y Ganá con PEGALO!</span>
-          </div>
-          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-            Iniciá sesión o creá tu cuenta con usuario, email y contraseña para guardar tus pronósticos y competir en el ranking.
-          </p>
-          <div className="flex justify-center gap-2">
-            <Link href="/login">
-              <Button size="sm" className="h-8 text-xs font-bold bg-primary hover:bg-primary/95 text-white">
-                Ingresar / Crear Cuenta
-              </Button>
-            </Link>
+        <div className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-r from-primary/10 via-background to-primary/5 p-6 text-center shadow-lg shadow-primary/5 group">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+          <div className="relative z-10 space-y-4">
+            <div className="inline-flex items-center justify-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary">
+              <span className="text-lg animate-bounce">⚽</span>
+              ¡Pronosticá y Ganá con PEGALO!
+            </div>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+              Iniciá sesión o creá tu cuenta para guardar tus pronósticos, sumar puntos y competir en el ranking oficial.
+            </p>
+            <div className="pt-2">
+              <Link href="/login">
+                <Button className="rounded-full bg-primary hover:bg-primary/90 text-white font-bold px-8 shadow-md shadow-primary/20 transition-all hover:scale-105 active:scale-95">
+                  Ingresar / Crear Cuenta
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -163,42 +166,42 @@ export default function HomePage() {
       {/* Top Ranking Preview */}
       <section>
         <SectionHeader title="🏆 Ranking PEGALO" href="/ranking" />
-        <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
+        <div className="rounded-3xl glass-panel overflow-hidden border-border/40">
           {topStandings.length > 0 ? (
             topStandings.map((u, i) => (
               <div
                 key={u.user_id}
-                className={`flex items-center justify-between px-4 py-3 ${
+                className={`flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-muted/30 ${
                   i !== topStandings.length - 1 ? "border-b border-border/30" : ""
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-background/50 shadow-sm text-sm font-bold">
                     {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${u.rank}`}
                   </span>
-                  <span className="text-sm font-medium">{u.username}</span>
+                  <span className="text-sm font-semibold">{u.username}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-primary">
                     {u.points} pts
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground hidden sm:inline-block">
                     {u.exact_results} exactos
                   </span>
                 </div>
               </div>
             ))
           ) : (
-            <div className="p-6 text-center text-sm text-muted-foreground">
+            <div className="p-8 text-center text-sm text-muted-foreground">
               Aún no hay usuarios en el ranking. ¡Sé el primero en jugar!
             </div>
           )}
           
           {/* Current user context row */}
           {user ? (
-            <div className="flex items-center justify-between border-t-2 border-primary/20 bg-primary/5 px-4 py-3">
+            <div className="flex items-center justify-between border-t border-primary/20 bg-primary/5 px-5 py-4 backdrop-blur-md">
               <div className="flex items-center gap-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 shadow-sm text-xs font-bold text-primary">
                   {standings?.rank ?? (totalPoints > 0 ? "8" : "-")}
                 </span>
                 <span className="text-sm font-bold text-primary">
@@ -206,15 +209,15 @@ export default function HomePage() {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-primary">
+                <span className="text-base font-black text-primary drop-shadow-sm">
                   {standings?.points ?? totalPoints} pts
                 </span>
               </div>
             </div>
           ) : (
-            <Link href="/login" className="flex items-center justify-between border-t border-dashed border-border/60 hover:bg-muted/30 px-4 py-3 text-xs font-semibold text-primary transition-all">
+            <Link href="/login" className="flex items-center justify-between border-t border-dashed border-border/60 hover:bg-primary/5 px-5 py-4 text-xs font-semibold text-primary transition-all">
               <span>👉 Iniciá sesión para aparecer en el ranking oficial</span>
-              <span>Ingresar →</span>
+              <span className="font-bold">Ingresar &rarr;</span>
             </Link>
           )}
         </div>
@@ -250,10 +253,10 @@ function StatCard({
   icon: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card p-3 text-center">
-      <span className="text-lg">{icon}</span>
-      <span className="text-lg font-bold tracking-tight">{value}</span>
-      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+    <div className="flex flex-col items-center justify-center gap-1.5 rounded-3xl glass-panel p-4 text-center shadow-sm hover:shadow-md transition-shadow">
+      <span className="text-2xl drop-shadow-sm">{icon}</span>
+      <span className="text-xl font-black tracking-tight text-foreground">{value}</span>
+      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
         {label}
       </span>
     </div>
@@ -268,13 +271,14 @@ function SectionHeader({
   href: string;
 }) {
   return (
-    <div className="mb-3 flex items-center justify-between">
-      <h2 className="text-sm font-bold">{title}</h2>
+    <div className="mb-4 flex items-center justify-between px-1">
+      <h2 className="text-base font-black tracking-tight text-foreground">{title}</h2>
       <Link
         href={href}
-        className="text-xs font-medium text-primary hover:underline"
+        className="group flex items-center gap-1 text-xs font-bold text-primary hover:text-primary/80 transition-colors"
       >
-        Ver todo →
+        Ver todo 
+        <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
       </Link>
     </div>
   );

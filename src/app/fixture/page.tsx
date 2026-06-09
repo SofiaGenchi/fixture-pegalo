@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { MatchCard } from "@/components/match-card";
 import { matches as staticMatches, Match } from "@/lib/data/matches";
 import { getTeamsByGroup, groups, teams, Team } from "@/lib/data/teams";
@@ -18,9 +19,13 @@ const stages: { value: Stage; label: string }[] = [
   { value: "final", label: "Final" },
 ];
 
-export default function FixturePage() {
-  const [activeStage, setActiveStage] = useState<Stage>("groups");
-  const [activeGroup, setActiveGroup] = useState("A");
+function FixtureContent() {
+  const searchParams = useSearchParams();
+  const initialStage = (searchParams.get("stage") as Stage) || "groups";
+  const initialGroup = searchParams.get("group") || "A";
+
+  const [activeStage, setActiveStage] = useState<Stage>(initialStage);
+  const [activeGroup, setActiveGroup] = useState(initialGroup);
   const [matches, setMatches] = useState<Match[]>(staticMatches);
 
   useEffect(() => {
@@ -112,6 +117,14 @@ export default function FixturePage() {
         ))}
       </Tabs>
     </div>
+  );
+}
+
+export default function FixturePage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-sm text-muted-foreground">Cargando fixture...</div>}>
+      <FixtureContent />
+    </Suspense>
   );
 }
 

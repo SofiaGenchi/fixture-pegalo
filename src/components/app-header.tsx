@@ -17,7 +17,7 @@ export function AppHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl lg:fixed lg:left-0 lg:top-0 lg:bottom-0 lg:w-64 lg:border-b-0 lg:border-r">
+    <header className="sticky top-0 z-50 glass-header lg:fixed lg:left-0 lg:top-0 lg:bottom-0 lg:w-64 lg:border-b-0 lg:border-r">
       {/* Mobile Header */}
       <div className="flex items-center justify-between px-4 py-3 lg:hidden">
         <Link href="/" className="flex items-center gap-2">

@@ -15,6 +15,9 @@ export interface Match {
   status: MatchStatus;
   homeScore?: number;
   awayScore?: number;
+  currentMinute?: number;
+  half?: string; // "1T", "2T", "ET", "PEN"
+  bzzoiroId?: number; // Maps to Bzzoiro API event ID
 }
 
 export interface Prediction {

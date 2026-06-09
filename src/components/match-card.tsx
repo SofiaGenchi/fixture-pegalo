@@ -32,6 +32,7 @@ export function MatchCard({ match, showGroup = true, compact = false }: MatchCar
 
   const homeTeam = getTeamById(match.homeTeamId);
   const awayTeam = getTeamById(match.awayTeamId);
+
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [homeGoals, setHomeGoals] = useState(0);
@@ -83,8 +84,17 @@ export function MatchCard({ match, showGroup = true, compact = false }: MatchCar
     setIsEditing(false);
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    router.push(`/partido/${match.id}`);
+  };
+
   return (
-    <div className="group rounded-2xl border border-border/60 bg-card p-4 transition-all duration-300 hover:border-border hover:shadow-lg hover:shadow-primary/5">
+    <div className="group relative rounded-2xl glass-panel p-4 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 overflow-hidden">
+      {/* Clickable Area for Navigation */}
+      <div 
+        className="cursor-pointer"
+        onClick={handleClick}
+      >
       {/* Top row: group + date + status */}
       <div className="mb-3 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2">
@@ -151,6 +161,7 @@ export function MatchCard({ match, showGroup = true, compact = false }: MatchCar
           📍 {match.stadium}, {match.city}
         </div>
       )}
+      </div> {/* End Clickable Area */}
 
       {/* Prediction section */}
       {!compact && (
