@@ -171,10 +171,8 @@ export default function PerfilPage() {
       {/* Settings Grid */}
       <div className="grid grid-cols-3 gap-2">
         <Dialog open={isUsernameOpen} onOpenChange={setIsUsernameOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="text-xs font-semibold h-10 w-full text-muted-foreground hover:text-foreground">
-              ✏️ Cambiar Nombre
-            </Button>
+          <DialogTrigger render={<Button variant="outline" size="sm" className="text-xs font-semibold h-10 w-full text-muted-foreground hover:text-foreground" />}>
+            ✏️ Cambiar Nombre
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -200,10 +198,8 @@ export default function PerfilPage() {
         </Dialog>
 
         <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="text-xs font-semibold h-10 w-full text-muted-foreground hover:text-foreground">
-              🔒 Contraseña
-            </Button>
+          <DialogTrigger render={<Button variant="outline" size="sm" className="text-xs font-semibold h-10 w-full text-muted-foreground hover:text-foreground" />}>
+            🔒 Contraseña
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -229,10 +225,8 @@ export default function PerfilPage() {
         </Dialog>
 
         <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="text-xs font-semibold h-10 w-full text-destructive hover:bg-destructive/10 border-destructive/20">
-              🗑️ Eliminar
-            </Button>
+          <DialogTrigger render={<Button variant="outline" size="sm" className="text-xs font-semibold h-10 w-full text-destructive hover:bg-destructive/10 border-destructive/20" />}>
+            🗑️ Eliminar
           </DialogTrigger>
           <DialogContent className="sm:max-w-md border-red-500/50">
             <DialogHeader>
