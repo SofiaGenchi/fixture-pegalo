@@ -158,9 +158,10 @@ export default function RankingPage() {
 
         {standingsList.length > 0 ? (
           standingsList.map((u, i) => (
-            <div
+            <Link
+              href={`/perfil/${encodeURIComponent(u.name)}`}
               key={u.rank + "-" + i}
-              className={`flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/30 ${
+              className={`flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/40 cursor-pointer ${
                 i !== standingsList.length - 1 ? "border-b border-border/20" : ""
               }`}
             >
@@ -190,7 +191,7 @@ export default function RankingPage() {
                 </span>
                 <span className="text-[10px] text-muted-foreground">pts</span>
               </div>
-            </div>
+            </Link>
           ))
         ) : (
           <div className="p-8 text-center text-sm text-muted-foreground">
@@ -236,7 +237,7 @@ function PodiumCard({
   ];
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <Link href={`/perfil/${encodeURIComponent(user.name)}`} className="flex flex-col items-center gap-2 group cursor-pointer transition-transform hover:scale-105">
       <span className="text-2xl">{medals[position]}</span>
       <div
         className={`${height} w-20 rounded-t-xl bg-gradient-to-b ${gradients[position]} border border-border/60 flex flex-col items-center justify-end p-2`}
@@ -245,8 +246,8 @@ function PodiumCard({
           {user.name.split(" ")[0]}
         </p>
         <p className="text-lg font-bold text-primary">{user.points}</p>
-        <p className="text-[9px] text-muted-foreground">pts</p>
+        <p className="text-[9px] text-muted-foreground group-hover:text-foreground transition-colors">pts</p>
       </div>
-    </div>
+    </Link>
   );
 }
