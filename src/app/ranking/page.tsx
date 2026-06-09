@@ -23,52 +23,44 @@ export default function RankingPage() {
 
       if (isSupabaseConfigured) {
         try {
-          // Fetch global rankings from Supabase view
-          const { data: standingsData, error: standingsErr } = await supabase
-            .from("user_standings")
-            .select("username, points, exact_results, total_predictions, rank")
-            .order("rank", { ascending: true })
-            .limit(1000);
+          // Fetch global rankings from secure API
+          const res = await fetch("/api/ranking");
+          if (res.ok) {
+            const { standings } = await res.json();
+            if (standings && standings.length > 0) {
+              setStandingsList(
+                standings.map((item: any) => ({
+                  name: item.username,
+                  points: item.points,
+                  exactResults: item.exact_results,
+                  totalPredictions: item.total_predictions,
+                  rank: item.rank,
+                }))
+              );
 
-          if (standingsErr) {
-            console.error("Error fetching standings:", standingsErr.message);
-            setStandingsList([]);
-          } else if (standingsData && standingsData.length > 0) {
-            setStandingsList(
-              standingsData.map((item: any) => ({
-                name: item.username,
-                points: item.points,
-                exactResults: item.exact_results,
-                totalPredictions: item.total_predictions,
-                rank: item.rank,
-              }))
-            );
+              // Find logged in user standing from the fetched list
+              if (user) {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                  const singleStanding = standings.find((s: any) => s.user_id === session.user.id);
+                  if (singleStanding) {
+                    setUserStanding({
+                      points: singleStanding.points,
+                      rank: singleStanding.rank,
+                      exactResults: singleStanding.exact_results,
+                      totalPredictions: singleStanding.total_predictions,
+                    });
+                  }
+                }
+              }
+            } else {
+              setStandingsList([]);
+            }
           } else {
             setStandingsList([]);
           }
-
-          // Fetch logged in user standing specifically
-          if (user) {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-              const { data: singleStanding } = await supabase
-                .from("user_standings")
-                .select("points, rank, exact_results, total_predictions")
-                .eq("user_id", session.user.id)
-                .maybeSingle();
-
-              if (singleStanding) {
-                setUserStanding({
-                  points: singleStanding.points,
-                  rank: singleStanding.rank,
-                  exactResults: singleStanding.exact_results,
-                  totalPredictions: singleStanding.total_predictions,
-                });
-              }
-            }
-          }
         } catch (e) {
-          console.error("Error loading Supabase rankings:", e);
+          console.error("Error loading rankings from API:", e);
           setStandingsList([]);
         }
       } else {
