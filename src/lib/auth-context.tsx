@@ -222,6 +222,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
+        options: {
+          data: {
+            username: trimmedUsername,
+          }
+        }
       });
 
       if (error) {
@@ -229,14 +234,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
-        // 3. Create profile entry manually
+        // 3. Create profile entry manually (if the Supabase trigger didn't do it)
         const { error: profileErr } = await supabase.from("profiles").insert({
           id: data.user.id,
           username: trimmedUsername,
           email: trimmedEmail,
         });
 
-        if (profileErr) {
+        // Ignore error if it's a duplicate key (meaning the database trigger already created it)
+        if (profileErr && profileErr.code !== '23505') {
           console.error("Error creating profile:", profileErr.message);
           return { success: false, error: "Error al crear el perfil de usuario." };
         }
