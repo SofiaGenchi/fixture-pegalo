@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { UserAvatar } from "@/components/user-avatar";
+import { ThemeToggle } from "./theme-toggle";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -33,7 +34,8 @@ export function AppHeader() {
         </Link>
 
         {/* User avatar on mobile header */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
           {user ? (
             <Link href="/perfil" className="flex items-center">
               <UserAvatar username={user.username} size="sm" />
@@ -41,7 +43,7 @@ export function AppHeader() {
           ) : (
             <Link
               href="/login"
-              className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-white hover:bg-primary/95 transition-all shadow-sm"
+              className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground hover:bg-primary/95 transition-all shadow-sm"
             >
               Ingresar
             </Link>
@@ -105,7 +107,7 @@ export function AppHeader() {
           ) : (
             <Link
               href="/login"
-              className="block w-full rounded-xl bg-primary py-2 text-center text-xs font-bold text-white hover:bg-primary/95 transition-all shadow-md"
+              className="block w-full rounded-xl bg-primary py-2 text-center text-xs font-bold text-primary-foreground hover:bg-primary/95 transition-all shadow-md"
             >
               Iniciar Sesión
             </Link>

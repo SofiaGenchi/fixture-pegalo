@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { getPointsBg } from "@/lib/data/utils";
-import { getMatchById, Prediction } from "@/lib/data/matches";
+import { Match } from "@/types";
+import { getMatches } from "@/lib/services/matches.service";
 import { getTeamById } from "@/lib/data/teams";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,8 @@ export default function PublicProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [predictions, setPredictions] = useState<any[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [profile, setProfile] = useState<{
     username: string;
     points: number;
@@ -44,7 +46,10 @@ export default function PublicProfilePage() {
 
         const data = await res.json();
         setProfile(data.profile);
-        setPredictions(data.predictions);
+        setPredictions(data.predictions || []);
+        
+        const allMatches = await getMatches();
+        setMatches(allMatches);
       } catch (err: any) {
         setError(err.message || "Error de conexión");
       } finally {
@@ -84,7 +89,7 @@ export default function PublicProfilePage() {
   let misses = 0;
 
   predictions.forEach((p) => {
-    const match = getMatchById(p.matchId);
+    const match = matches.find(m => m.id === p.matchId);
     if (match?.status === "finished" && match.homeScore !== undefined && match.awayScore !== undefined) {
       const pts = calculatePoints(p.homeScore, p.awayScore, match.homeScore, match.awayScore);
       if (pts === 3) exactResults++;
@@ -169,8 +174,8 @@ export default function PublicProfilePage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {[...predictions].map((p) => {
-              const match = getMatchById(p.matchId);
+            {[...predictions].reverse().map((p) => {
+              const match = matches.find(m => m.id === p.matchId);
               if (!match) return null;
               const home = getTeamById(match.homeTeamId);
               const away = getTeamById(match.awayTeamId);

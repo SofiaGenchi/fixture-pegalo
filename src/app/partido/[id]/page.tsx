@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getMatchById } from "@/lib/data/matches";
+import { getMatchById } from "@/lib/services/matches.service";
 import { teams } from "@/lib/data/teams";
 import { fetchLiveMatchData, MatchEvent, LiveMatchData } from "@/lib/data/live-events";
 import Link from "next/link";
@@ -22,7 +22,7 @@ export default function MatchDetailsPage() {
 
     const loadMatchData = async () => {
       if (!isNaN(matchId)) {
-        const m = getMatchById(matchId);
+        const m = await getMatchById(matchId);
         if (m) {
           setMatch(m);
 

@@ -165,7 +165,7 @@ function LoginForm() {
             />
           </div>
 
-          <Button type="submit" className="w-full mt-2 font-bold bg-primary hover:bg-primary/95 text-white">
+          <Button type="submit" className="w-full mt-2 font-bold bg-primary hover:bg-primary/95 text-primary-foreground">
             {isLogin ? "Iniciar Sesión" : "Registrarme y Pronosticar"}
           </Button>
         </form>

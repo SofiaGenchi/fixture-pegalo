@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { currentUserRanking } from "@/lib/data/ranking";
-import { getAllPredictions, getPointsLabel, getPointsBg } from "@/lib/data/utils";
-import { getMatchById, Prediction } from "@/lib/data/matches";
+import { getPointsLabel, getPointsBg } from "@/lib/data/utils";
+import { getAllPredictions } from "@/lib/services/predictions.service";
+import { getMatches } from "@/lib/services/matches.service";
+import { Match, Prediction } from "@/types";
 import { getTeamById } from "@/lib/data/teams";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export default function PerfilPage() {
   const { user, logout, updateUsername, updatePassword, deleteAccount } = useAuth();
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [standings, setStandings] = useState<{ points: number; rank: number; exactResults: number; totalPredictions: number } | null>(null);
+  const [matches, setMatches] = useState<Match[]>([]);
 
   // Settings states
   const [newUsername, setNewUsername] = useState("");
@@ -33,6 +35,8 @@ export default function PerfilPage() {
     const loadData = async () => {
       const preds = await getAllPredictions();
       setPredictions(preds);
+      const allMatches = await getMatches();
+      setMatches(allMatches);
 
       if (isSupabaseConfigured && user) {
         try {
@@ -75,7 +79,7 @@ export default function PerfilPage() {
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
           <Link href="/login?redirect=/perfil" className="w-full">
-            <Button className="w-full font-bold bg-primary hover:bg-primary/95 text-white">
+            <Button className="w-full font-bold bg-primary hover:bg-primary/95 text-primary-foreground">
               Iniciar Sesión / Crear Cuenta
             </Button>
           </Link>
@@ -97,7 +101,7 @@ export default function PerfilPage() {
   let misses = 0;
 
   predictions.forEach((p) => {
-    const match = getMatchById(p.matchId);
+    const match = matches.find(m => m.id === p.matchId);
     if (match?.status === "finished" && match.homeScore !== undefined && match.awayScore !== undefined) {
       const pts = calculatePoints(p.homeScore, p.awayScore, match.homeScore, match.awayScore);
       totalPoints += pts;
@@ -148,7 +152,14 @@ export default function PerfilPage() {
       <div className="flex items-center gap-4 bg-card/40 border border-border/50 rounded-2xl p-4 shadow-sm">
         <UserAvatar username={user.username} size="lg" />
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold truncate text-foreground">{user.username}</h1>
+          <h1 className="text-xl font-bold truncate text-foreground flex items-center gap-2">
+            {user.username}
+            {predictions.length > 0 && (
+              <span className="text-sm bg-orange-500/20 text-orange-500 px-2 py-0.5 rounded-full" title="Racha activa">
+                🔥 3 días
+              </span>
+            )}
+          </h1>
           <p className="text-xs text-primary font-bold mt-1">
             {predictions.length} pronósticos realizados
           </p>
@@ -276,6 +287,50 @@ export default function PerfilPage() {
 
       <Separator />
 
+      {/* Gamification / Medals */}
+      <div>
+        <h3 className="text-sm font-bold mb-3">🏅 Mis Logros</h3>
+        <div className="grid grid-cols-3 gap-2">
+          {predictions.length > 0 ? (
+            <div className="flex flex-col items-center p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center">
+              <span className="text-2xl mb-1">🥉</span>
+              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">Primer Paso</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center p-3 rounded-2xl bg-muted/30 border border-border/50 text-center opacity-50 grayscale">
+              <span className="text-2xl mb-1">🔒</span>
+              <span className="text-[10px] font-bold text-muted-foreground">Primer Paso</span>
+            </div>
+          )}
+
+          {exactResults >= 5 ? (
+            <div className="flex flex-col items-center p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-center">
+              <span className="text-2xl mb-1">🎯</span>
+              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400">Francotirador</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center p-3 rounded-2xl bg-muted/30 border border-border/50 text-center opacity-50 grayscale">
+              <span className="text-2xl mb-1">🔒</span>
+              <span className="text-[10px] font-bold text-muted-foreground">Francotirador</span>
+            </div>
+          )}
+
+          {predictions.length >= 10 ? (
+            <div className="flex flex-col items-center p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-center">
+              <span className="text-2xl mb-1">🌟</span>
+              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">Veterano</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center p-3 rounded-2xl bg-muted/30 border border-border/50 text-center opacity-50 grayscale">
+              <span className="text-2xl mb-1">🔒</span>
+              <span className="text-[10px] font-bold text-muted-foreground">Veterano</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Separator />
+
       {/* Predictions history */}
       <div>
         <h3 className="text-sm font-bold mb-3">📋 Mis Pronósticos</h3>
@@ -287,15 +342,15 @@ export default function PerfilPage() {
               Andá al fixture y empezá a pronosticar
             </p>
             <Link href="/fixture" className="mt-4">
-              <Button size="sm" className="text-xs font-bold text-white bg-primary">
+              <Button size="sm" className="text-xs font-bold text-primary-foreground bg-primary">
                 Ver el Fixture
               </Button>
             </Link>
           </div>
         ) : (
           <div className="space-y-2">
-            {[...predictions].reverse().map((p) => {
-              const match = getMatchById(p.matchId);
+            {predictions.map((p) => {
+              const match = matches.find(m => m.id === p.matchId);
               if (!match) return null;
               const home = getTeamById(match.homeTeamId);
               const away = getTeamById(match.awayTeamId);

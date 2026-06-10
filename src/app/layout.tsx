@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/bottom-nav";
 import { AppHeader } from "@/components/app-header";
 import { AuthProvider } from "@/lib/auth-context";
+import { ToastProvider } from "@/lib/toast-context";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { ThemeProvider } from "@/components/theme-provider";
 
-const inter = Inter({
+const outfit = Outfit({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
@@ -37,10 +40,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false,
+  userScalable: true,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
-    { media: "(prefers-color-scheme: dark)", color: "#1a1a2e" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
   ],
 };
 
@@ -50,17 +53,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-background">
-        <AuthProvider>
-          <AppHeader />
-          <main className="flex-1 pb-20 lg:pb-0 lg:pl-64">
-            <div className="mx-auto max-w-3xl px-4 py-4 lg:py-6">
-              {children}
-            </div>
-          </main>
-          <BottomNav />
-        </AuthProvider>
+    <html lang="es" className={`${outfit.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-background font-sans selection:bg-primary/30 text-foreground">
+        <ErrorBoundary>
+          <ToastProvider>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <AuthProvider>
+              <AppHeader />
+              <main className="flex-1 pb-20 lg:pb-0 lg:pl-64">
+                <div className="mx-auto max-w-3xl px-4 py-4 lg:py-6">
+                  {children}
+                </div>
+              </main>
+              <BottomNav />
+              </AuthProvider>
+            </ThemeProvider>
+          </ToastProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
