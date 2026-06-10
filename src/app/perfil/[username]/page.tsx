@@ -83,6 +83,7 @@ export default function PublicProfilePage() {
   }
 
   // Calculate stats points breakdown
+  let totalPoints = 0;
   let exactResults = 0;
   let correctDiffs = 0;
   let correctWinners = 0;
@@ -92,6 +93,7 @@ export default function PublicProfilePage() {
     const match = matches.find(m => m.id === p.matchId);
     if (match?.status === "finished" && match.homeScore !== undefined && match.awayScore !== undefined) {
       const pts = calculatePoints(p.homeScore, p.awayScore, match.homeScore, match.awayScore);
+      totalPoints += pts;
       if (pts === 3) exactResults++;
       else if (pts === 2) correctDiffs++;
       else if (pts === 1) correctWinners++;
@@ -134,7 +136,7 @@ export default function PublicProfilePage() {
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-2xl border border-border/60 bg-card p-4 text-center">
-          <p className="text-3xl font-bold text-primary">{profile.points}</p>
+          <p className="text-3xl font-bold text-primary">{totalPoints}</p>
           <p className="text-xs text-muted-foreground mt-1 font-semibold uppercase tracking-wider">Puntos Totales</p>
         </div>
         <div className="rounded-2xl border border-border/60 bg-card p-4 text-center">
@@ -142,14 +144,15 @@ export default function PublicProfilePage() {
           <p className="text-xs text-muted-foreground mt-1 font-semibold uppercase tracking-wider">Posición</p>
         </div>
         <div className="rounded-2xl border border-border/60 bg-card p-4 text-center">
-          <p className="text-3xl font-bold text-emerald-500">{profile.exactResults}</p>
+          <p className="text-3xl font-bold text-emerald-500">{exactResults}</p>
           <p className="text-xs text-muted-foreground mt-1 font-semibold uppercase tracking-wider">Exactos</p>
         </div>
         <div className="rounded-2xl border border-border/60 bg-card p-4 text-center">
-          <p className="text-3xl font-bold">{profile.totalPredictions}</p>
+          <p className="text-3xl font-bold">{predictions.length}</p>
           <p className="text-xs text-muted-foreground mt-1 font-semibold uppercase tracking-wider">Pronósticos</p>
         </div>
       </div>
+
 
       {/* Points breakdown */}
       <div className="rounded-2xl border border-border/60 bg-card p-4">

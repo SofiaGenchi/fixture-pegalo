@@ -16,10 +16,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
     const decodedUsername = decodeURIComponent(username);
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    // 1. Fetch user standing and user_id using the username from user_standings view
-    // (We use user_standings because it has both username and the computed points)
+    // 1. Fetch user standing and user_id using the username from user_standings_mv view
     const { data: standing, error: standingErr } = await supabase
-      .from('user_standings')
+      .from('user_standings_mv')
       .select('user_id, username, points, exact_results, total_predictions, rank')
       .ilike('username', decodedUsername)
       .maybeSingle();

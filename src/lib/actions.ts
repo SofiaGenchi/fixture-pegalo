@@ -62,3 +62,65 @@ export async function savePredictionAction(
     return { success: false, error: "Internal server error." };
   }
 }
+
+/**
+ * Server action to save multiple predictions in bulk.
+ * Requires the client to pass their JWT token.
+ */
+export async function savePredictionsActionBulk(
+  predictions: Prediction[],
+  token?: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return { success: false, error: "Supabase not configured." };
+  }
+
+  if (!token) {
+    return { success: false, error: "Unauthorized: No token provided." };
+  }
+
+  if (predictions.length === 0) {
+    return { success: true };
+  }
+
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    });
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      return { success: false, error: "Unauthorized: Invalid token." };
+    }
+
+    const rows = predictions.map((p) => ({
+      user_id: user.id,
+      match_id: p.matchId,
+      home_score: p.homeScore,
+      away_score: p.awayScore,
+      penalty_winner: p.penaltyWinner,
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { error } = await supabase.from("predictions").upsert(
+      rows,
+      { onConflict: "user_id,match_id" }
+    );
+
+    if (error) {
+      console.error("Error upserting predictions bulk:", error);
+      return { success: false, error: "Failed to save predictions in database." };
+    }
+
+    return { success: true };
+  } catch (e) {
+    console.error("Unexpected error in savePredictionsActionBulk:", e);
+    return { success: false, error: "Internal server error." };
+  }
+}
+

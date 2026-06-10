@@ -43,7 +43,7 @@ export default function PerfilPage() {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             const { data } = await supabase
-              .from("user_standings")
+              .from("user_standings_mv")
               .select("points, rank, exact_results, total_predictions")
               .eq("user_id", session.user.id)
               .maybeSingle();

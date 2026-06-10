@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase, isSupabaseConfigured } from "./supabase-client";
 import { syncMatchesToSupabase } from "./supabase-sync";
+import { savePredictionsActionBulk } from "./actions";
 
 export interface User {
   username: string;
@@ -75,6 +76,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const syncLocalPredictions = async (username: string) => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const defaultKey = "pegalo_predictions";
+      const userKey = `pegalo_predictions_${username.toLowerCase()}`;
+      
+      const defaultStored = localStorage.getItem(defaultKey);
+      const userStored = localStorage.getItem(userKey);
+
+      let localPredictions: any[] = [];
+
+      if (defaultStored) {
+        try {
+          const parsed = JSON.parse(defaultStored);
+          if (Array.isArray(parsed)) {
+            localPredictions = [...localPredictions, ...parsed];
+          }
+        } catch (e) {}
+      }
+
+      if (userStored) {
+        try {
+          const parsed = JSON.parse(userStored);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((p) => {
+              if (!localPredictions.some((lp) => lp.matchId === p.matchId)) {
+                localPredictions.push(p);
+              }
+            });
+          }
+        } catch (e) {}
+      }
+
+      if (localPredictions.length === 0) return;
+
+      console.log(`[Sync] Encontrados ${localPredictions.length} pronósticos locales para sincronizar...`);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await savePredictionsActionBulk(
+        localPredictions.map(p => ({
+          matchId: p.matchId,
+          homeScore: p.homeScore,
+          awayScore: p.awayScore,
+          penaltyWinner: p.penaltyWinner,
+        })),
+        session.access_token
+      );
+      
+      if (res.success) {
+        console.log("[Sync] Sincronización exitosa con la base de datos.");
+        localStorage.removeItem(defaultKey);
+        localStorage.removeItem(userKey);
+      } else {
+        console.error("[Sync] Error al sincronizar con la base de datos:", res.error);
+      }
+    } catch (err) {
+      console.error("[Sync] Error inesperado en sincronización:", err);
+    }
+  };
+
   const fetchAndSetProfile = async (uid: string, fallbackEmail: string, metaUsername?: string) => {
     try {
       const { data: profile, error } = await supabase
@@ -83,19 +147,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq("id", uid)
         .maybeSingle();
 
+      const resolvedUsername = profile ? profile.username : (metaUsername || fallbackEmail.split("@")[0]);
+
       if (profile) {
         setUser({ username: profile.username, email: profile.email });
         localStorage.setItem("pegalo_display_name", profile.username);
       } else {
         // Fallback user if profile row was not created or delayed
-        const fallbackName = metaUsername || fallbackEmail.split("@")[0];
-        const dummyUser = { username: fallbackName, email: fallbackEmail };
+        const dummyUser = { username: resolvedUsername, email: fallbackEmail };
         setUser(dummyUser);
       }
+
+      // Sync local predictions to Supabase if any exist
+      await syncLocalPredictions(resolvedUsername);
     } catch (e) {
       console.error("Error fetching user profile:", e);
     }
   };
+
 
   const login = async (username: string, password: string) => {
     if (!username || !password) {
