@@ -1,4 +1,4 @@
-import { Prediction } from './matches';
+import { Prediction } from '@/types';
 import { supabase, isSupabaseConfigured } from '../supabase-client';
 
 /**
@@ -12,20 +12,30 @@ export function calculatePoints(
   predHome: number,
   predAway: number,
   realHome: number,
-  realAway: number
+  realAway: number,
+  predPenalty?: 'home' | 'away',
+  realPenalty?: 'home' | 'away'
 ): number {
+  let pts = 0;
   // Exact result
-  if (predHome === realHome && predAway === realAway) return 3;
+  if (predHome === realHome && predAway === realAway) {
+    pts = 3;
+  } else if ((predHome - predAway) === (realHome - realAway)) {
+    // Correct goal difference
+    pts = 2;
+  } else {
+    // Correct winner
+    const predWinner = predHome > predAway ? 'home' : predHome < predAway ? 'away' : 'draw';
+    const realWinner = realHome > realAway ? 'home' : realHome < realAway ? 'away' : 'draw';
+    if (predWinner === realWinner) pts = 1;
+  }
   
-  // Correct goal difference
-  if ((predHome - predAway) === (realHome - realAway)) return 2;
-  
-  // Correct winner
-  const predWinner = predHome > predAway ? 'home' : predHome < predAway ? 'away' : 'draw';
-  const realWinner = realHome > realAway ? 'home' : realHome < realAway ? 'away' : 'draw';
-  if (predWinner === realWinner) return 1;
-  
-  return 0;
+  // Extra point for predicting correct penalty winner if it went to penalties
+  if (realPenalty && predPenalty === realPenalty) {
+    pts += 1;
+  }
+
+  return pts;
 }
 
 export function getPointsLabel(points: number): string {
@@ -136,118 +146,28 @@ export function getPredictionsKey(): string {
   return PREDICTIONS_KEY;
 }
 
-// Internal synchronous helpers for fallback mode
-function getAllPredictionsSync(): Prediction[] {
+export function getAllPredictionsSync(): Prediction[] {
   if (typeof window === 'undefined') return [];
   const key = getPredictionsKey();
   const stored = localStorage.getItem(key);
   return stored ? JSON.parse(stored) : [];
 }
 
-export async function savePrediction(prediction: Prediction): Promise<void> {
-  if (!isSupabaseConfigured) {
-    // LocalStorage Fallback
-    const key = getPredictionsKey();
-    const predictions = getAllPredictionsSync();
-    const existing = predictions.findIndex(p => p.matchId === prediction.matchId);
-    if (existing >= 0) {
-      predictions[existing] = prediction;
-    } else {
-      predictions.push(prediction);
-    }
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(key, JSON.stringify(predictions));
-    }
-    return;
-  }
-
-  // Supabase Live
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
-
-    const { error } = await supabase.from("predictions").upsert(
-      {
-        user_id: session.user.id,
-        match_id: prediction.matchId,
-        home_score: prediction.homeScore,
-        away_score: prediction.awayScore,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,match_id" }
-    );
-
-    if (error) {
-      console.error("Error upserting prediction in Supabase:", error.message);
-    }
-  } catch (e) {
-    console.error("Unexpected error saving prediction:", e);
-  }
+export function getPredictionSync(matchId: number): Prediction | undefined {
+  return getAllPredictionsSync().find(p => p.matchId === matchId);
 }
 
-export async function getAllPredictions(): Promise<Prediction[]> {
-  if (!isSupabaseConfigured) {
-    return getAllPredictionsSync();
+export function savePredictionSync(prediction: Prediction): void {
+  const key = getPredictionsKey();
+  const predictions = getAllPredictionsSync();
+  const existing = predictions.findIndex(p => p.matchId === prediction.matchId);
+  if (existing >= 0) {
+    predictions[existing] = prediction;
+  } else {
+    predictions.push(prediction);
   }
-
-  // Supabase Live
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return [];
-
-    const { data, error } = await supabase
-      .from("predictions")
-      .select("match_id, home_score, away_score")
-      .eq("user_id", session.user.id);
-
-    if (error) {
-      console.error("Error fetching predictions from Supabase:", error.message);
-      return [];
-    }
-
-    return (data || []).map((p: any) => ({
-      matchId: p.match_id,
-      homeScore: p.home_score,
-      awayScore: p.away_score,
-    }));
-  } catch (e) {
-    console.error("Unexpected error getting predictions:", e);
-    return [];
-  }
-}
-
-export async function getPrediction(matchId: number): Promise<Prediction | undefined> {
-  if (!isSupabaseConfigured) {
-    return getAllPredictionsSync().find(p => p.matchId === matchId);
-  }
-
-  // Supabase Live
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return undefined;
-
-    const { data, error } = await supabase
-      .from("predictions")
-      .select("match_id, home_score, away_score")
-      .eq("user_id", session.user.id)
-      .eq("match_id", matchId)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error fetching single prediction from Supabase:", error.message);
-      return undefined;
-    }
-
-    if (!data) return undefined;
-
-    return {
-      matchId: data.match_id,
-      homeScore: data.home_score,
-      awayScore: data.away_score,
-    };
-  } catch (e) {
-    console.error("Unexpected error getting prediction:", e);
-    return undefined;
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(key, JSON.stringify(predictions));
   }
 }
 

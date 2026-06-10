@@ -28,29 +28,12 @@ const BZZOIRO_API_URL = "https://api.bzzoiro.com/api/v2";
  * Requires NEXT_PUBLIC_BZZOIRO_API_KEY to be set in .env
  */
 export async function fetchLiveMatchData(bzzoiroEventId: number): Promise<LiveMatchData | null> {
-  const token = process.env.NEXT_PUBLIC_BZZOIRO_API_KEY;
-  if (!token) {
-    console.warn("⚠️ Bzzoiro API Key is missing. Please set NEXT_PUBLIC_BZZOIRO_API_KEY.");
-    return null;
-  }
-
   try {
-    const headers = {
-      "Authorization": `Token ${token}`,
-      "Content-Type": "application/json"
-    };
-
-    // 1. Fetch event status and score
-    const eventRes = await fetch(`${BZZOIRO_API_URL}/events/${bzzoiroEventId}/`, { headers });
-    if (!eventRes.ok) throw new Error("Failed to fetch event data");
-    const eventData = await eventRes.json();
-
-    // 2. Fetch event incidents
-    const incidentsRes = await fetch(`${BZZOIRO_API_URL}/events/${bzzoiroEventId}/incidents/`, { headers });
-    let incidentsData = [];
-    if (incidentsRes.ok) {
-      incidentsData = await incidentsRes.json();
-    }
+    // Call our internal proxy API instead of exposing the token to the client
+    const res = await fetch(`/api/live-match/${bzzoiroEventId}`);
+    if (!res.ok) throw new Error("Failed to fetch live match data");
+    
+    const { eventData, incidentsData } = await res.json();
 
     // Map Bzzoiro incidents to our MatchEvent type
     const mappedEvents: MatchEvent[] = incidentsData.map((inc: any) => ({

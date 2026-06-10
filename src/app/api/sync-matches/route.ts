@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { matches as staticMatches } from '@/lib/data/matches';
+import { matches as staticMatches } from "@/lib/data/matches";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -14,30 +14,50 @@ export async function GET(request: Request) {
   }
 
   try {
-    // 1. Obtener datos de la API pública gratuita (no requiere API Key)
-    const apiRes = await fetch('https://worldcup26.ir/get/games', {
-      next: { revalidate: 0 } // No cachear la llamada en Next.js
-    });
+    // 1. Obtener datos de la API pública gratuita con retry logic
+    let data = null;
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const apiRes = await fetch('https://worldcup26.ir/get/games', {
+          next: { revalidate: 0 },
+          signal: AbortSignal.timeout(10000)
+        });
+        if (apiRes.ok) {
+          data = await apiRes.json();
+          break;
+        }
+      } catch (err) {
+        console.warn(`Fetch failed, retries left: ${retries - 1}`);
+      }
+      retries--;
+      if (retries > 0) await new Promise(res => setTimeout(res, 2000));
+    }
 
-    const data = await apiRes.json();
-
-    if (!data.games || data.games.length === 0) {
-      return NextResponse.json({ message: 'No se encontraron partidos en la API.' });
+    if (!data || !data.games || data.games.length === 0) {
+      return NextResponse.json({ message: 'No se encontraron partidos en la API o la API falló.' }, { status: 502 });
     }
 
     // 2. Mapear la respuesta de la API a nuestro esquema de Supabase
     const mappedMatches = data.games.map((f: any) => {
-      const matchId = parseInt(f.id);
-      const staticMatch = staticMatches.find(m => m.id === matchId);
+      const apiHomeId = parseInt(f.home_team_id);
+      const apiAwayId = parseInt(f.away_team_id);
+      const matchDateIso = parseDate(f.local_date);
+      
+      const staticMatch = staticMatches.find(m => 
+        (m.homeTeamId === apiHomeId && m.awayTeamId === apiAwayId) ||
+        (m.homeTeamId === apiAwayId && m.awayTeamId === apiHomeId)
+      );
+
+      const matchId = staticMatch ? staticMatch.id : parseInt(f.id);
       
       return {
         id: matchId,
         stage: mapStage(f.type),
         group_id: f.group || null,
-        home_team_id: parseInt(f.home_team_id),
-        away_team_id: parseInt(f.away_team_id),
-        // Convertir '06/11/2026 13:00' a formato ISO
-        match_date: parseDate(f.local_date),
+        home_team_id: apiHomeId,
+        away_team_id: apiAwayId,
+        match_date: matchDateIso,
         stadium: staticMatch ? staticMatch.stadium : `Estadio ${f.stadium_id}`,
         city: staticMatch ? staticMatch.city : 'Sede Oficial',
         country: staticMatch ? staticMatch.country : '', 
@@ -90,7 +110,8 @@ function parseDate(localDateStr: string): string {
     const [month, day, year] = datePart.split('/');
     const [hour, minute] = timePart.split(':');
     
-    const d = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour) + 6, parseInt(minute)));
+    // API devuelve fechas en EST (UTC-5). Sumamos 5 horas para obtener UTC real.
+    const d = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour) + 5, parseInt(minute)));
     return d.toISOString();
   } catch (e) {
     return new Date().toISOString();

@@ -244,7 +244,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // 3. Create profile entry using secure server API (bypasses RLS)
         const res = await fetch("/api/user/create-profile", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${data.session?.access_token}`
+          },
           body: JSON.stringify({
             id: data.user.id,
             username: trimmedUsername,
@@ -321,7 +324,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Update
       const res = await fetch("/api/user/update-profile", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
           id: session.user.id,
           username: trimmed

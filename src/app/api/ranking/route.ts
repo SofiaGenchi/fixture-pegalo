@@ -14,9 +14,9 @@ export async function GET() {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    // Fetch global rankings bypassing RLS
+    // Fetch global rankings bypassing RLS using the new Materialized View
     const { data: standingsData, error: standingsErr } = await supabase
-      .from("user_standings")
+      .from("user_standings_mv")
       .select("user_id, username, points, exact_results, total_predictions, rank")
       .order("rank", { ascending: true })
       .limit(1000);

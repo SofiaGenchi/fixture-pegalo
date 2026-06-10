@@ -1,43 +1,4 @@
-export type MatchStage = 'group' | 'round_of_32' | 'round_of_16' | 'quarter' | 'semi' | 'third' | 'final';
-export type MatchStatus = 'scheduled' | 'live' | 'finished' | 'postponed';
-
-export interface Match {
-  id: number;
-  stage: MatchStage;
-  groupId?: string;
-  homeTeamId: number;
-  awayTeamId: number;
-  /** ISO string in UTC */
-  matchDate: string;
-  stadium: string;
-  city: string;
-  country: string;
-  status: MatchStatus;
-  homeScore?: number;
-  awayScore?: number;
-  currentMinute?: number;
-  half?: string; // "1T", "2T", "ET", "PEN"
-  bzzoiroId?: number; // Maps to Bzzoiro API event ID
-}
-
-export interface Prediction {
-  matchId: number;
-  homeScore: number;
-  awayScore: number;
-  pointsEarned?: number;
-}
-
-export interface GroupStanding {
-  teamId: number;
-  played: number;
-  won: number;
-  drawn: number;
-  lost: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  goalDifference: number;
-  points: number;
-}
+import { Match, MatchStage, MatchStatus, Prediction, GroupStanding } from "@/types";
 
 // All times stored as UTC. Dates are approximate. Real fixture will be seeded from API.
 // We provide enough group stage matches to demonstrate the app.
@@ -139,6 +100,37 @@ export const matches: Match[] = [
   { id: 70, stage: 'group', groupId: 'L', homeTeamId: 48, awayTeamId: 46, matchDate: '2026-06-22T19:00:00Z', stadium: 'Arrowhead Stadium', city: 'Kansas City', country: 'US', status: 'scheduled' },
   { id: 71, stage: 'group', groupId: 'L', homeTeamId: 46, awayTeamId: 47, matchDate: '2026-06-27T22:00:00Z', stadium: 'Mercedes-Benz Stadium', city: 'Atlanta', country: 'US', status: 'scheduled' },
   { id: 72, stage: 'group', groupId: 'L', homeTeamId: 48, awayTeamId: 45, matchDate: '2026-06-27T22:00:00Z', stadium: 'Arrowhead Stadium', city: 'Kansas City', country: 'US', status: 'scheduled' },
+  { id: 73, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-28T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 74, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-28T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 75, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-28T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 76, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-28T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 77, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-29T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 78, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-29T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 79, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-29T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 80, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-29T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 81, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-30T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 82, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-30T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 83, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-30T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 84, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-30T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 85, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-07-01T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 86, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-07-01T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 87, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-07-01T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 88, stage: 'round_of_32', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-07-01T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 89, stage: 'round_of_16', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-4T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 90, stage: 'round_of_16', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-4T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 91, stage: 'round_of_16', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-4T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 92, stage: 'round_of_16', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-4T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 93, stage: 'round_of_16', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-5T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 94, stage: 'round_of_16', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-5T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 95, stage: 'round_of_16', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-5T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 96, stage: 'round_of_16', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-5T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 97, stage: 'quarter', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-9T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 98, stage: 'quarter', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-9T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 99, stage: 'quarter', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-9T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 100, stage: 'quarter', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-9T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 101, stage: 'semi', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-14T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 102, stage: 'semi', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-14T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
+  { id: 103, stage: 'final', homeTeamId: 999, awayTeamId: 999, matchDate: '2026-06-19T19:00:00Z', stadium: 'TBD Stadium', city: 'TBD', country: 'US', status: 'scheduled' },
 ];
 
 export function getMatchesByGroup(groupId: string): Match[] {
@@ -149,9 +141,7 @@ export function getMatchesByStage(stage: MatchStage): Match[] {
   return matches.filter(m => m.stage === stage);
 }
 
-export function getMatchById(id: number): Match | undefined {
-  return matches.find(m => m.id === id);
-}
+
 
 export function getTodayMatches(): Match[] {
   const now = new Date();

@@ -10,10 +10,23 @@ export async function POST(request: Request) {
   }
 
   try {
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader) {
+      return NextResponse.json({ error: "No authorization header provided" }, { status: 401 });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const supabaseAnon = createClient(SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(token);
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
     const { id, username, email } = await request.json();
     
-    if (!id || !username || !email) {
-      return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+    if (!id || !username || !email || id !== user.id) {
+      return NextResponse.json({ error: 'Missing or invalid parameters' }, { status: 400 });
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
